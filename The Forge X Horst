@@ -1,0 +1,58 @@
+repeat
+    task.wait(0.1)
+until game:IsLoaded() and _G.Horst_SetDescription
+
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+
+local Equipments = require(ReplicatedStorage.Shared.Data.Equipments)
+local Knit = require(Shared.Packages.Knit)
+local PlayerController = Knit.GetController("PlayerController")
+local Replica = PlayerController.Replica
+
+-- รายการ Pickaxe ที่ต้องตรวจสอบ
+local TargetPickaxes = {
+    "Arcane Pickaxe",
+    "Demonic Pickaxe",
+    "Magma Pickaxe",
+}
+
+local Pickaxes = {}
+local Gold
+
+while true do
+    Gold = Replica.Data.Gold or 0
+
+    local race = Replica.Data.Race or "Unknown"
+    local level = Replica.Data.Level or 0
+
+    for _, item in pairs(Replica.Data.Inventory.Equipments) do
+        if typeof(item) == "table" then
+            if Equipments.Items.Pickaxe[item.Name] then
+                table.insert(Pickaxes, item.Name)
+            end
+        end
+    end
+
+    -- ตรวจสอบ Pickaxe แต่ละประเภท
+    for _, axeName in ipairs(TargetPickaxes) do
+        if table.find(Pickaxes, axeName) then
+            print("✅ " .. axeName)
+        else
+            print("❌ " .. axeName)
+        end
+    end
+
+    -- อัปเดตคำอธิบายเดิม
+    _G.Horst_SetDescription(
+        "📈 Level: " .. level ..
+        " 🏷️ Race: " .. race ..
+        " ⛏️ Pickaxes: " .. table.concat(Pickaxes, ", ") ..
+        " 🪙 Gold: " .. string.format("%d", Gold)
+    )
+
+    table.clear(Pickaxes)
+    task.wait(10)
+end
