@@ -28,24 +28,33 @@ while true do
     local race = Replica.Data.Race or "Unknown"
     local level = Replica.Data.Level or 0
 
+    -- ตั้งค่าเริ่มต้นเป็น ❌ ทั้งหมดก่อน
+    local PickaxeStatus = {}
+    for _, axeName in ipairs(TargetPickaxes) do
+        PickaxeStatus[axeName] = "❌ " .. axeName
+    end
+
+    -- ตรวจของในกระเป๋า
     for _, item in pairs(Replica.Data.Inventory.Equipments) do
         if typeof(item) == "table" then
             if Equipments.Items.Pickaxe[item.Name] then
+
+                -- เปลี่ยนเป็นเจอ = ✅
+                if PickaxeStatus[item.Name] then
+                    PickaxeStatus[item.Name] = "✅ " .. item.Name
+                end
+
                 table.insert(Pickaxes, item.Name)
             end
         end
     end
 
-    -- ตรวจสอบ Pickaxe แต่ละประเภท
+    -- แสดงผล Log ทีละอัน
     for _, axeName in ipairs(TargetPickaxes) do
-        if table.find(Pickaxes, axeName) then
-            print("✅ " .. axeName)
-        else
-            print("❌ " .. axeName)
-        end
+        print(PickaxeStatus[axeName])
     end
 
-    -- อัปเดตคำอธิบายเดิม
+    -- Log เดิม
     _G.Horst_SetDescription(
         "📈 Level: " .. level ..
         " 🏷️ Race: " .. race ..
