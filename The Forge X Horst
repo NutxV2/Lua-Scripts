@@ -1,6 +1,6 @@
 repeat
     task.wait(0.1)
-until game:IsLoaded() and _G.Horst_SetDescription
+until game:IsLoaded() and _G.Horst_SetDescription -- wait horst loaded
 
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
@@ -12,54 +12,42 @@ local Knit = require(Shared.Packages.Knit)
 local PlayerController = Knit.GetController("PlayerController")
 local Replica = PlayerController.Replica
 
--- รายการ Pickaxe ที่ต้องตรวจสอบ
-local TargetPickaxes = {
-    "Arcane Pickaxe",
-    "Demonic Pickaxe",
-    "Magma Pickaxe",
-}
-
 local Pickaxes = {}
-local Gold
+local SpecialPickaxeList = { "Arcane Pickaxe", "Demonic Pickaxe", "Magma Pickaxe" }
 
+local Gold
 while true do
     Gold = Replica.Data.Gold or 0
 
     local race = Replica.Data.Race or "Unknown"
     local level = Replica.Data.Level or 0
 
-    -- ตั้งค่าเริ่มต้นเป็น ❌ ทั้งหมดก่อน
-    local PickaxeStatus = {}
-    for _, axeName in ipairs(TargetPickaxes) do
-        PickaxeStatus[axeName] = "❌ " .. axeName
-    end
-
-    -- ตรวจของในกระเป๋า
+    -- เก็บ Pickaxe ทั้งหมด
     for _, item in pairs(Replica.Data.Inventory.Equipments) do
         if typeof(item) == "table" then
-            if Equipments.Items.Pickaxe[item.Name] then
-
-                -- เปลี่ยนเป็นเจอ = ✅
-                if PickaxeStatus[item.Name] then
-                    PickaxeStatus[item.Name] = "✅ " .. item.Name
-                end
-
+            if Equipments.Items.Pickaxe[item.Name] then 
                 table.insert(Pickaxes, item.Name)
             end
         end
     end
 
-    -- แสดงผล Log ทีละอัน
-    for _, axeName in ipairs(TargetPickaxes) do
-        print(PickaxeStatus[axeName])
+    -- ตรวจสอบ Pickaxe พิเศษ
+    local specialFound = {}
+    for _, special in ipairs(SpecialPickaxeList) do
+        if table.find(Pickaxes, special) then
+            table.insert(specialFound, "✅ " .. special)
+        end
     end
 
-    -- Log เดิม
+    if #specialFound == 0 then
+        table.insert(specialFound, "❌ Not Founded")
+    end
+
     _G.Horst_SetDescription(
         "📈 Level: " .. level ..
         " 🏷️ Race: " .. race ..
-        " ⛏️ Pickaxes: " .. table.concat(Pickaxes, ", ") ..
-        " 🪙 Gold: " .. string.format("%d", Gold)
+        " ⛏️ Pickaxes: " .. table.concat(specialFound, ", ") ..
+        " 💰 Gold: " .. string.format("%d", Gold)
     )
 
     table.clear(Pickaxes)
