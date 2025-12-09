@@ -1,6 +1,4 @@
-repeat
-    task.wait(0.1)
-until game:IsLoaded() and _G.Horst_SetDescription -- wait horst loaded
+repeat task.wait() until game:IsLoaded() and _G.Horst_SetDescription -- wait horst loaded
 
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
