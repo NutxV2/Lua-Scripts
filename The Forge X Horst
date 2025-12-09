@@ -1,4 +1,6 @@
-repeat task.wait() until _G.Horst_SetDescription ~= nil
+repeat
+    task.wait(0.1)
+until game:IsLoaded() and _G.Horst_SetDescription -- wait horst loaded
 
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
@@ -11,39 +13,44 @@ local PlayerController = Knit.GetController("PlayerController")
 local Replica = PlayerController.Replica
 
 local Pickaxes = {}
-local SpecialPickaxeList = { "Arcane Pickaxe", "Demonic Pickaxe", "Magma Pickaxe" }
-
 local Gold
+local Race
+local Level
+
+-- รายการ Axe พิเศษที่ต้องตรวจ
+local TargetAxeList = {
+    ["Arcane Pickaxe"] = true,
+    ["Demonic Pickaxe"] = true,
+    ["Magma Pickaxe"] = true,
+}
+
 while true do
     Gold = Replica.Data.Gold or 0
+    Race = Replica.Data.Race or "Unknown"
+    Level = Replica.Data.Level or 0
 
-    local race = Replica.Data.Race or "Unknown"
-    local level = Replica.Data.Level or 0
+    local foundAxe = "❌ Not found Axe"
 
     for _, item in pairs(Replica.Data.Inventory.Equipments) do
         if typeof(item) == "table" then
+            -- เก็บ pickaxe ตามเดิม
             if Equipments.Items.Pickaxe[item.Name] then 
-                table.insert(Pickaxes, item.Name)
+                table.insert(Pickaxes, item.Name) 
+            end
+
+            -- ตรวจ Axe พิเศษ
+            if TargetAxeList[item.Name] then
+                foundAxe = "✅ " .. item.Name
             end
         end
     end
 
-    local specialFound = {}
-    for _, special in ipairs(SpecialPickaxeList) do
-        if table.find(Pickaxes, special) then
-            table.insert(specialFound, "✅ " .. special)
-        end
-    end
-
-    if #specialFound == 0 then
-        table.insert(specialFound, "❌ Not Founded")
-    end
-
     _G.Horst_SetDescription(
-        "📈 Level: " .. level ..
-        " 🏷️ Race: " .. race ..
-        " ⛏️ Pickaxes: " .. table.concat(specialFound, ", ") ..
-        " 💰 Gold: " .. string.format("%d", Gold)
+        "🎚️ Level: " .. tostring(Level) ..
+        " ⛏️ Pickaxes: " .. table.concat(Pickaxes, ", ") ..
+        " 💰 Gold: " .. string.format("%d", Gold) ..
+        " 🧬 Race: " .. tostring(Race) ..
+        " 🪓 Axe: " .. foundAxe
     )
 
     table.clear(Pickaxes)
