@@ -47,10 +47,9 @@ while true do
 
     _G.Horst_SetDescription(
         "🎚️ Level: " .. tostring(Level) ..
-        " ⛏️ Pickaxes: " .. table.concat(Pickaxes, ", ") ..
+        " ⛏️ Pickaxes: " .. foundAxe ..
         " 💰 Gold: " .. string.format("%d", Gold) ..
-        " 🧬 Race: " .. tostring(Race) ..
-        " 🪓 Axe: " .. foundAxe
+        " 🧬 Race: " .. tostring(Race)
     )
 
     table.clear(Pickaxes)
