@@ -1,6 +1,6 @@
 repeat
     task.wait(0.1)
-until game:IsLoaded() and _G.Horst_SetDescription -- wait horst loaded
+until game:IsLoaded() and _G.Horst_SetDescription
 
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
@@ -17,7 +17,6 @@ local Gold
 local Race
 local Level
 
--- รายการ Axe พิเศษที่ต้องตรวจ
 local TargetAxeList = {
     ["Arcane Pickaxe"] = true,
     ["Demonic Pickaxe"] = true,
@@ -29,25 +28,33 @@ while true do
     Race = Replica.Data.Race or "Unknown"
     Level = Replica.Data.Level or 0
 
-    local foundAxe = "❌ Not found Axe"
+    local foundAxes = {}
 
     for _, item in pairs(Replica.Data.Inventory.Equipments) do
         if typeof(item) == "table" then
-            -- เก็บ pickaxe ตามเดิม
+            
             if Equipments.Items.Pickaxe[item.Name] then 
                 table.insert(Pickaxes, item.Name) 
             end
 
-            -- ตรวจ Axe พิเศษ
             if TargetAxeList[item.Name] then
-                foundAxe = "✅ " .. item.Name
+                table.insert(foundAxes, item.Name)
             end
         end
     end
 
+    local axeText = "❌ Not found Axe"
+
+    if #foundAxes > 0 then
+        for i = 1, #foundAxes do
+            foundAxes[i] = "✅ " .. foundAxes[i]
+        end
+        axeText = table.concat(foundAxes, ", ")
+    end
+
     _G.Horst_SetDescription(
         "🎚️ Level: " .. tostring(Level) ..
-        " ⛏️ Pickaxes: " .. foundAxe ..
+        " ⛏️ Pickaxes: " .. axeText ..
         " 💰 Gold: " .. string.format("%d", Gold) ..
         " 🧬 Race: " .. tostring(Race)
     )
