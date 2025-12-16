@@ -23,6 +23,21 @@ local TargetAxeList = {
     ["Magma Pickaxe"] = true,
 }
 
+local function formatNumberShort(n)
+    n = tonumber(n) or 0
+
+    if n >= 1_000_000_000 then
+        return string.format("%.1fb", n / 1_000_000_000):gsub("%.0b", "b")
+    elseif n >= 1_000_000 then
+        return string.format("%.1fm", n / 1_000_000):gsub("%.0m", "m")
+    elseif n >= 1_000 then
+        return string.format("%.1fk", n / 1_000):gsub("%.0k", "k")
+    else
+        return tostring(n)
+    end
+end
+
+
 while true do
     Gold = Replica.Data.Gold or 0
     Race = Replica.Data.Race or "Unknown"
@@ -55,7 +70,7 @@ while true do
     _G.Horst_SetDescription(
         "🎚️ Level: " .. tostring(Level) ..
         " ⛏️ Pickaxes: " .. axeText ..
-        " 💰 Gold: " .. string.format("%d", Gold) ..
+        " 💰 Gold: " .. formatNumberShort(Gold) ..
         " 🧬 Race: " .. tostring(Race)
     )
 
