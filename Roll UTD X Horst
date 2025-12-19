@@ -1,0 +1,193 @@
+getgenv().UTD_Config = getgenv().UTD_Config or {
+    ["RerollMode"] = true,
+    ["CloseIfTrash"] = true,
+    ["MinGemsToStart"] = 50,
+    ["AutoSummon"] = true,
+    ["WebhookUrl"] = "",
+    ["TestWebhook"] = false
+}
+
+local Cfg = getgenv().UTD_Config
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+local StarterGui = game:GetService("StarterGui")
+local LP = Players.LocalPlayer
+
+local Request = (syn and syn.request) or request or (http and http.request) or http_request
+
+-- ⭐ ตัวหายาก
+local RARE_UNITS = {
+    ["Mob"] = true,
+    ["kirito"] = true,
+    ["Sasuke"] = true,
+    ["Spade"] = true,
+    ["Genos"] = true,
+    ["Miku"] = true,
+    ["Jinoo"] = true,
+    ["Jinwoo"] = true,
+    ["Shunks"] = true,
+    ["Psycho"] = true,
+    ["Berserker"] = true
+}
+
+local CODES = {"ThankYou100k", "HereyougoEA!", "ThousandsOfCodes!", "MaxedOut!", "SixSeven!", "FixingBugs!",
+               "75kLikes!", "NumberOne!", "Universal!", "Mainstream!", "ThankYouUTD!", "40kCCU!", "RELEASE!",
+               "THANKYOU!", "UNRIVALED!", "SorryEA!", "SorryEA2!"}
+
+local STATE = {
+    FoundRares = {},
+    HasSummoned = false
+}
+
+local function Log(msg)
+    print("[UTD] " .. msg)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "UTD Bot",
+            Text = msg,
+            Duration = 3
+        })
+    end)
+end
+
+-- 🔔 Webhook
+local function SendWebhook(unitName)
+    if not Cfg.WebhookUrl or Cfg.WebhookUrl == "" then
+        return
+    end
+    local payload = HttpService:JSONEncode({
+        username = "UTD Reroll Bot",
+        embeds = {{
+            title = "RARE PULLED!",
+            description = LP.Name .. " got **" .. unitName .. "**",
+            color = 16763904,
+            footer = {
+                text = os.date("%Y-%m-%d %X")
+            }
+        }}
+    })
+    Request({
+        Url = Cfg.WebhookUrl,
+        Method = "POST",
+        Headers = {
+            ["Content-Type"] = "application/json"
+        },
+        Body = payload
+    })
+end
+
+-- 💎 เช็ค Gems
+local function GetGemAmount()
+    local gems = 0
+    pcall(function()
+        local ui = LP.PlayerGui.LobbyUi.HUD.Bottom.Hotbar.Currencies
+        local lbl = ui:GetChildren()[9]:FindFirstChildWhichIsA("TextLabel", true)
+        if lbl then
+            local t = lbl.Text:gsub("x", ""):gsub(",", "")
+            local mul = t:find("M") and 1e6 or t:find("K") and 1e3 or 1
+            gems = (tonumber(t:match("[%d%.]+")) or 0) * mul
+        end
+    end)
+    return gems
+end
+
+-- Knit
+local Knit = ReplicatedStorage.Packages._Index["sleitnick_knit@1.7.0"].knit.Services
+local Svc = {
+    Data = Knit.DataService.RE,
+    Banner = Knit.BannerService.RF,
+    Code = Knit.CodeService.RF.Redeem,
+    BP = Knit.BattlepassService.RF.ClaimTiers
+}
+
+Log("Starting Roll Script")
+
+-- Redeem Codes
+task.spawn(function()
+    for _, code in pairs(CODES) do
+        pcall(function()
+            Svc.Code:InvokeServer(code)
+        end)
+        task.wait(0.1)
+    end
+end)
+
+pcall(function()
+    Svc.BP:InvokeServer({
+        [1] = 1
+    })
+end)
+task.wait(2)
+
+-- 🎰 Auto Roll
+if Cfg.AutoSummon then
+    task.spawn(function()
+        while true do
+            local Gems = GetGemAmount()
+            if Gems >= Cfg.MinGemsToStart then
+                STATE.HasSummoned = true
+
+                pcall(function()
+                    LP.Character.HumanoidRootPart.CFrame = workspace.Zones.SpecialZones.Banner:GetPivot()
+                end)
+
+                Svc.Data.SetSetting:FireServer("AutoSkipSummon", true)
+                Svc.Data.SetSetting:FireServer("SellRare", true)
+                Svc.Data.SetSetting:FireServer("SellEpic", true)
+
+                local summonType = (Gems >= 500) and "TenSummon" or "SingleSummon"
+                local loops = (summonType == "TenSummon") and math.floor(Gems / 500) or math.floor(Gems / 50)
+
+                Log("Summon " .. summonType .. " x" .. loops)
+
+                for i = 1, loops do
+                    local ok, res = pcall(function()
+                        return Svc.Banner.BuyBanner:InvokeServer(summonType, "Special")
+                    end)
+                    if ok and res then
+                        for _, u in pairs(type(res) == "table" and res or {res}) do
+                            local name = u.Unit or u.Name
+                            if RARE_UNITS[name] then
+                                table.insert(STATE.FoundRares, name)
+                                Log("RARE : " .. name)
+                                SendWebhook(name)
+
+                                -- ===== ส่งเข้า _G.Horst_SetDescription =====
+                                if _G.Horst_SetDescription then
+                                    local json_strings = {
+                                        Unit = name,
+                                        TotalRare = #STATE.FoundRares,
+                                        Gems = GetGemAmount(),
+                                        Player = LP.Name
+                                    }
+
+                                    local EncodeJson = HttpService:JSONEncode(json_strings)
+                                    local messages = "⭐ UNIT " .. name .. " | TOTAL " .. #STATE.FoundRares
+
+                                    _G.Horst_SetDescription(messages, EncodeJson)
+                                end
+                            end
+                        end
+                    end
+                    task.wait(2)
+                end
+            else
+                if STATE.HasSummoned then
+                    if #STATE.FoundRares == 0 and Cfg.CloseIfTrash then
+                        Log("Trash Account")
+                        game:Shutdown()
+                    else
+                        Log("Finished")
+                    end
+                    break
+                end
+            end
+            task.wait(2)
+        end
+    end)
+end
