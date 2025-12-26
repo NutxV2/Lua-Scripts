@@ -23,6 +23,14 @@ local TargetAxeList = {
     ["Magma Pickaxe"] = true,
 }
 
+-- Mapping Race กับ Emoji
+local RaceEmojis = {
+    ["Demon"] = "👿",
+    ["Angel"] = "😇",
+    ["Archangel"] = "👑",
+    ["Unknown"] = "❓", -- กรณีไม่เจอเผ่า
+}
+
 local function formatNumberShort(n)
     n = tonumber(n) or 0
 
@@ -37,7 +45,6 @@ local function formatNumberShort(n)
     end
 end
 
-
 while true do
     Gold = Replica.Data.Gold or 0
     Race = Replica.Data.Race or "Unknown"
@@ -47,7 +54,6 @@ while true do
 
     for _, item in pairs(Replica.Data.Inventory.Equipments) do
         if typeof(item) == "table" then
-            
             if Equipments.Items.Pickaxe[item.Name] then 
                 table.insert(Pickaxes, item.Name) 
             end
@@ -67,11 +73,14 @@ while true do
         axeText = table.concat(foundAxes, ", ")
     end
 
+    -- เลือก emoji ตาม Race
+    local raceEmoji = RaceEmojis[Race] or "❓"
+
     _G.Horst_SetDescription(
         "🎚️ Level: " .. tostring(Level) ..
         " ⛏️ Pickaxes: " .. axeText ..
         " 💰 Gold: " .. formatNumberShort(Gold) ..
-        " 🧬 Race: " .. tostring(Race)
+        " " .. raceEmoji .. " Race: " .. tostring(Race)
     )
 
     table.clear(Pickaxes)
