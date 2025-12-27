@@ -1,0 +1,79 @@
+repeat task.wait(0.1) until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Equipments = require(ReplicatedStorage.Shared.Data.Equipments)
+local Knit = require(Shared.Packages.Knit)
+local PlayerController = Knit.GetController("PlayerController")
+local Replica = PlayerController.Replica
+
+-- request (executor)
+local request = request or http_request or syn.request
+if not request then
+    warn("[HTTP] Executor ไม่รองรับ request")
+    return
+end
+
+local API_URL = "https://w4-team.vercel.app/api/theforge"
+
+local TargetAxeList = {
+    ["Arcane Pickaxe"] = true,
+    ["Demonic Pickaxe"] = true,
+    ["Magma Pickaxe"] = true,
+}
+
+local function sendToAPI(payload)
+    local success, res = pcall(function()
+        return request({
+            Url = API_URL,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json",
+            },
+            Body = HttpService:JSONEncode(payload),
+        })
+    end)
+
+    if not success then
+        warn("[HTTP] request error:", res)
+        return
+    end
+
+    if res.StatusCode == 200 then
+        warn("[HTTP] ส่งข้อมูลสำเร็จ | Status:", res.StatusCode)
+    else
+        warn("[HTTP] ส่งไม่ผ่าน | Status:", res.StatusCode, "| Body:", res.Body)
+    end
+end
+
+while true do
+    local gold = Replica.Data.Gold or 0
+    local race = Replica.Data.Race or "Unknown"
+    local level = Replica.Data.Level or 0
+
+    local foundAxes = {}
+
+    for _, item in pairs(Replica.Data.Inventory.Equipments) do
+        if typeof(item) == "table" and TargetAxeList[item.Name] then
+            table.insert(foundAxes, item.Name)
+        end
+    end
+
+    local payload = {
+        name = player.Name,
+        level = level,
+        gold = gold,
+        race = race,
+        pickaxes = foundAxes,
+        status = "ONLINE",
+        timestamp = os.time(),
+    }
+
+    sendToAPI(payload)
+    task.wait(10)
+end
