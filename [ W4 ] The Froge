@@ -65,6 +65,8 @@ while true do
     end
 
     local payload = {
+        key = getgenv().W4_Settings.KEY,
+        pc = getgenv().W4_Settings.PC,
         name = player.Name,
         level = level,
         gold = gold,
