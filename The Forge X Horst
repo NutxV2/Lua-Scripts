@@ -21,7 +21,10 @@ local TargetAxeList = {
     ["Arcane Pickaxe"] = true,
     ["Demonic Pickaxe"] = true,
     ["Magma Pickaxe"] = true,
+    ["Frost Pickaxe"] = true,
+    ["Prismatic Pickaxe"] = true,
 }
+
 
 -- Mapping Race กับ Emoji
 local RaceEmojis = {
